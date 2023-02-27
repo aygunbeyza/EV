@@ -1,0 +1,281 @@
+---
+title: "makrofaj"
+author: "beyza"
+date: "2023-02-21"
+output: html_document
+---
+
+load libraries
+```{r}
+library(argparse)
+library(findpython)
+library(sp)
+library(SeuratObject)
+library(Seurat)
+library(hdf5r)
+library(devtools)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(patchwork)
+library(devtools)
+library(AUCell)
+library(Seurat)
+library(GSEABase)
+library(Rtsne)
+
+
+```
+
+
+
+```{r}
+getwd()
+setwd("/Users/beyzaaygun/Desktop/Bioinformatic/TÜSEB/GSE122960")
+```
+
+
+SeuratObject oluşturmak için
+```{r}
+
+GSM3489182_obj <- Read10X_h5(filename = "GSM3489182_Donor_01_filtered_gene_bc_matrices_h5.h5",
+                             use.names = TRUE,
+                             unique.features = TRUE)
+
+
+
+Seurat_GSM3489182 <- CreateSeuratObject(counts = GSM3489182_obj)
+Seurat_GSM3489182
+
+```
+
+SeuratObject oluşturmak için
+```{r}
+
+GSM3489182_obj <- Read10X_h5(filename = "GSM3489182_Donor_01_filtered_gene_bc_matrices_h5.h5",
+                             use.names = TRUE,
+                             unique.features = TRUE)
+
+
+
+Seurat_GSM3489182 <- CreateSeuratObject(counts = GSM3489182_obj)
+Seurat_GSM3489182
+
+```
+
+2. filtering
+```{r}
+Seurat_GSM3489182 <- subset(Seurat_GSM3489182, subset =nFeature_RNA > 200 & nFeature_RNA <4500 & percent.mt < 17)
+```
+
+3. Normalize data
+```{r}
+#pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
+
+Seurat_GSM3489182 <- NormalizeData(Seurat_GSM3489182)
+```
+
+4. Identify highly variable features
+```{r}
+Seurat_GSM3489182 <- FindVariableFeatures(Seurat_GSM3489182, selection.method = "vst", nfeatures = 3863)
+```
+
+5. Scaling
+```{r}
+all.genes <- rownames(Seurat_GSM3489182)
+Seurat_GSM3489182 <- ScaleData(Seurat_GSM3489182, features = all.genes)
+```
+
+6.Perform linear dimensionality reduction
+```{r}
+Seurat_GSM3489182 <- RunPCA(Seurat_GSM3489182, features = VariableFeatures(object = Seurat_GSM3489182))
+Seurat_GSM3489182
+```
+
+
+EV ilgili genleri expression seviyesini görmek için
+```{r}
+features <- c("CD9", "CD63", "CD81", "PDCD6IP", "TSG101", "TSPAN6", "TSPAN8")
+RidgePlot(Seurat_GSM3489182, features = features, ncol = 1)
+VlnPlot(Seurat_GSM3489182, features = features)
+
+```
+
+
+
+tsne
+```{r}
+Seurat_GSM3489182 <- RunTSNE(
+  Seurat_GSM3489182,
+  reduction = "pca",
+  cells = NULL,
+  dims = 1:5,
+  features = NULL,
+  seed.use = 1,
+  tsne.method = "Rtsne",
+  dim.embed = 2,
+  distance.matrix = NULL,
+  reduction.name = "tsne",
+  reduction.key = "tSNE_"
+)
+
+DimPlot(Seurat_GSM3489182, reduction = "tsne")
+```
+
+
+For GeneSetrs
+
+```{r}
+genes2 <- unique(c("CD14", "CD68", "TFRC", "FCGR1A", "CCR5", "FCGR3A", "IL6", "RSPO3", "APOC1", "CD163", "MRC1"))
+geneSets2 <- GeneSet(genes2, setName="geneSet2")
+exprMatrix2 <- Seurat_GSM3489182
+```
+
+1. Score gene signatures
+RUN YOK
+```{r}
+
+counts2 <- GetAssayData(object = exprMatrix2, slot = "counts")
+
+```
+
+
+1.1. Build gene-expression rankings for each cell
+Her hücre için, genler en yüksekten en düşüğe doğru sıralanır. Aynı ifade değerine sahip genler karıştırılır. Bu nedenle, '0' ifadesine sahip genler, sıralamanın sonunda rastgele sıralanır.
+```{r}
+cells_rankings2 <- AUCell_buildRankings(counts2)
+cells_rankings2
+```
+
+
+1.2. Calculate enrichment for the gene signatures (AUC)
+```{r}
+cells_AUC2 <- AUCell_calcAUC(geneSets2, cells_rankings2)
+```
+
+
+2. Determine the cells with the given gene signatures or active gene sets
+2. neden boş????
+```{r}
+cells_assignment2 <- AUCell_exploreThresholds(cells_AUC2, plotHist=TRUE, assign=TRUE)
+cells_assignment$Oligodendrocyte_Cahoy$aucThr$thresholds
+```
+
+tekli yapınca hata???????????
+
+```{r}
+library("ggplot2")
+geneSetName2 <- rownames(cells_AUC2)[grep("geneSet2", rownames(cells_AUC2))]
+AUCell_plotHist(cells_AUC2[geneSetName2,], aucThr=0.23)
+abline(v=0.23)
+
+
+```
+
+
+```{r}
+quartz()
+newSelectedCells2 <- names(which(getAUC(cells_AUC2)["geneSet2",]>0.23))
+
+length(newSelectedCells2)
+```
+
+```{r}
+library("Seurat")
+exprMatrix2$is_ec2 <- ifelse(colnames(exprMatrix2) %in% newSelectedCells2, "macrophase", "non_macrophase")
+A <- newSelectedCells2
+
+DimPlot(reduction = "tsne",object=exprMatrix2, group.by = "is_ec2", label = TRUE)
+
+```
+umap ile
+```{r}
+exprMatrix2 <- RunUMAP(exprMatrix2, dims = 1:15)
+
+DimPlot(reduction = "umap",object=exprMatrix2, group.by = "is_ec2", label = TRUE)
+```
+
+
+```{r}
+FeaturePlot(exprMatrix, features = c("CD14", "CD68", "TFRC", "FCGR1A", "CCR5", "FCGR3A", "IL6", "RSPO3", "APOC1", "CD163", "MRC1"))
+
+```
+
+
+Makrofajları subset etmek
+```{r}
+
+exprMatrix2 <- subset(x = exprMatrix2, subset = is_ec2 == "macrophase")
+
+DimPlot(reduction = "tsne",object=exprMatrix2, label = TRUE)
+```
+
+
+Buradan sonrası makrofaj hcrelerindeki EV(-) VE EV(+)leri bulmak için
+
+For GeneSetrs
+
+```{r}
+genes <- unique(c("C1orf162", "C1QA", "CD74", "CLEC7A", "CTSC", "FCGR3A", "FN1", "GSTO1", "LIPA", "MARCH1", "NCF2", "S100A4", "SLC11A1", "TNFSF13B"))
+geneSets <- GeneSet(genes, setName="geneSet2")
+
+```
+
+
+1. Score gene signatures
+RUN YOK
+```{r}
+
+counts3 <- GetAssayData(object = exprMatrix2, slot = "counts")
+
+```
+
+
+1.1. Build gene-expression rankings for each cell
+Her hücre için, genler en yüksekten en düşüğe doğru sıralanır. Aynı ifade değerine sahip genler karıştırılır. Bu nedenle, '0' ifadesine sahip genler, sıralamanın sonunda rastgele sıralanır.
+```{r}
+cells_rankings3 <- AUCell_buildRankings(counts3)
+cells_rankings3
+```
+
+
+1.2. Calculate enrichment for the gene signatures (AUC)
+```{r}
+cells_AUC3 <- AUCell_calcAUC(geneSets, cells_rankings3)
+```
+
+2. Determine the cells with the given gene signatures or active gene sets
+2. neden boş????
+```{r}
+cells_assignment3 <- AUCell_exploreThresholds(cells_AUC3, plotHist=TRUE, assign=TRUE)
+cells_assignment3$Oligodendrocyte_Cahoy$aucThr$thresholds
+```
+
+
+
+```{r}
+library("ggplot2")
+geneSetName3 <- rownames(cells_AUC3)[grep("geneSet2", rownames(cells_AUC3))]
+AUCell_plotHist(cells_AUC3[geneSetName,], aucThr=0.45)
+abline(v=0.45)
+
+
+```
+
+```{r}
+quartz()
+newSelectedCells3 <- names(which(getAUC(cells_AUC3)["geneSet2",]>0.45))
+
+length(newSelectedCells3)
+```
+
+
+```{r}
+library("Seurat")
+exprMatrix2$is_ec3 <- ifelse(colnames(exprMatrix2) %in% newSelectedCells3, "EV", "non_EV")
+
+DimPlot(reduction = "umap",object=exprMatrix2, group.by = "is_ec3", label = TRUE)
+
+```
+
+
