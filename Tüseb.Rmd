@@ -5,6 +5,7 @@ date: "2022-12-08"
 output: html_document
 ---
 
+
 load libraries
 ```{r}
 library(argparse)
@@ -31,36 +32,34 @@ library(Rtsne)
 
 ```{r}
 getwd()
-setwd("/Users/beyzaaygun/Desktop/Bioinformatic/TÜSEB/GSE122960")
+setwd("~/Desktop/Bioinformatic/TÜSEB/GSE122960")
 ```
+
+
+
 
 
 SeuratObject oluşturmak için
 ```{r}
 
-GSM3489182_obj <- Read10X_h5(filename = "GSM3489182_Donor_01_filtered_gene_bc_matrices_h5.h5",
+GSM3489182_obj <- Read10X_h5(filename = "/Users/beyzaaygun/Desktop/Bioinformatic/TÜSEB/GSE122960/GSM3489182_Donor_01_filtered_gene_bc_matrices_h5.h5", 
                              use.names = TRUE,
                              unique.features = TRUE)
 
-
-
 Seurat_GSM3489182 <- CreateSeuratObject(counts = GSM3489182_obj)
-Seurat_GSM3489182
 
 ```
-
-
-
 
 
 Seurat
 1.MTReads
 ```{r}
 Seurat_GSM3489182[["percent.mt"]] <- PercentageFeatureSet(Seurat_GSM3489182, pattern = "^MT-")
+
 VlnPlot(Seurat_GSM3489182, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
 
-```
 
+```
 
 2. filtering
 ```{r}
@@ -70,7 +69,6 @@ Seurat_GSM3489182 <- subset(Seurat_GSM3489182, subset =nFeature_RNA > 200 & nFea
 3. Normalize data
 ```{r}
 #pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
-
 Seurat_GSM3489182 <- NormalizeData(Seurat_GSM3489182)
 ```
 
@@ -95,6 +93,19 @@ Seurat_GSM3489182
 ```
 
 
+7. umap
+```{r}
+
+Seurat_GSM3489182 <- FindNeighbors(Seurat_GSM3489182, dims = 1:10)
+Seurat_GSM3489182 <- FindClusters(Seurat_GSM3489182, resolution = 0.5)
+Seurat_GSM3489182 <- RunUMAP(Seurat_GSM3489182, dims = 1:15)
+DimPlot(Seurat_GSM3489182, reduction = "umap")
+
+
+```
+
+
+
 EV ilgili genleri expression seviyesini görmek için
 ```{r}
 features <- c("CD9", "CD63", "CD81", "PDCD6IP", "TSG101", "TSPAN6", "TSPAN8")
@@ -105,78 +116,45 @@ VlnPlot(Seurat_GSM3489182, features = features)
 
 
 
-tsne
-```{r}
-Seurat_GSM3489182 <- RunTSNE(
-  Seurat_GSM3489182,
-  reduction = "pca",
-  cells = NULL,
-  dims = 1:5,
-  features = NULL,
-  seed.use = 1,
-  tsne.method = "Rtsne",
-  dim.embed = 2,
-  distance.matrix = NULL,
-  reduction.name = "tsne",
-  reduction.key = "tSNE_"
-)
-
-DimPlot(Seurat_GSM3489182, reduction = "tsne")
-```
-
-
-install AUCell
-```{r}
-devtools::install_github("aertslab/AUCell", build_vignettes=F)
-if (!require("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-
-BiocManager::install("AUCell")
-```
-
-
-
-
 For GeneSetrs
-"CD9", "CD63", "CD81", "PDCD6IP", "TSG101", "ARF6", "ANXA1", "CD82", "CD37", "VTA1", "CD80", "CD86", "SIRT6", "SDCBP", "TRIM5", "CLTC", "VPS4A", "VPS4B", "HSPA4", "HSPA1A", "HSPA4", "HSPA8", "HSPA1B" ,"HSPA5", "HSPA14", "HSPA2", "HSPA9", "HSPD1", "HSP90AA1", "HSP90AB1", "PLD1", "PLD2"
+"CD9", "CD63", "CD81", "PDCD6IP", "TSG101", "ARF6", "ANXA1", "CD82", "CD37", "VTA1", "CD80", "CD86", "SIRT6", "SDCBP", "TRIM5", "CLTC", "VPS4A", "VPS4B", "HSPA4", "HSPA1A", "HSPA4", "HSPA8", "HSPA1B" ,"HSPA5", "HSPA14", "HSPA2", "HSPA9", "HSPD1", "HSP90AA1", "HSP90AB1", "PLD1", "PLD2", "CD40", "CHMP4B", "CHMP4A", "CHMP4C", "FLOT1", "FLOT2", "ANXA2", "ANXA6", "ANXA4", "ANXA7", "CFL1", "CFL2", "PFN1", "PFN2"
+
+"CD9", "CD63", "CD81", "PDCD6IP", "TSG101", "GAPDH", "SDCBP", "SDCBP2", "UBC", "CLTC", "CLTA", "CHMP4B", "CHMP4C", "VPS4A", "VPS4B", "MAPK1", "MAPK3", "ARF6"
 ```{r}
-genes <- unique(c("C1orf162", "C1QA", "CD74", "CLEC7A", "CTSC", "FCGR3A", "FN1", "GSTO1", "LIPA", "MARCH1", "NCF2", "S100A4", "SLC11A1", "TNFSF13B"))
-geneSets <- GeneSet(genes, setName="geneSet2")
+genes <- unique(c("CD9", "CD63", "CD81", "PDCD6IP", "TSG101", "ARF6", "ANXA1", "CD82", "CD37", "VTA1", "CD80", "CD86", "SIRT6", "SDCBP", "TRIM5", "CLTC", "VPS4A", "VPS4B", "HSPA4", "HSPA1A", "HSPA4", "HSPA8", "HSPA1B" ,"HSPA5", "HSPA14", "HSPA2", "HSPA9", "HSPD1", "HSP90AA1", "HSP90AB1", "PLD1", "PLD2", "CD40", "CHMP4B", "CHMP4A", "CHMP4C", "FLOT1", "FLOT2", "ANXA2", "ANXA6", "ANXA4", "ANXA7", "CFL1", "CFL2", "PFN1", "PFN2"))
+geneSets <- GeneSet(genes, setName="geneSet1")
 exprMatrix <- Seurat_GSM3489182
+exprMatrix_A <- Seurat_GSM3489182@assays$RNA@counts
+
+cells_AUC <- AUCell_run(exprMatrix_A, geneSets)
 ```
 
 
 
-1. Score gene signatures
-RUN YOK
-```{r}
 
+
+```{r}
 counts <- GetAssayData(object = exprMatrix, slot = "counts")
-
-```
-
-
-
-1.1. Build gene-expression rankings for each cell
-Her hücre için, genler en yüksekten en düşüğe doğru sıralanır. Aynı ifade değerine sahip genler karıştırılır. Bu nedenle, '0' ifadesine sahip genler, sıralamanın sonunda rastgele sıralanır.
-```{r}
 cells_rankings <- AUCell_buildRankings(counts)
 cells_rankings
 ```
 
 
 
-1.2. Calculate enrichment for the gene signatures (AUC)
+
 ```{r}
 cells_AUC <- AUCell_calcAUC(geneSets, cells_rankings)
 ```
 
 
+
+
 2. Determine the cells with the given gene signatures or active gene sets
-2. neden boş????
+
 ```{r}
 cells_assignment <- AUCell_exploreThresholds(cells_AUC, plotHist=TRUE, assign=TRUE)
 cells_assignment$Oligodendrocyte_Cahoy$aucThr$thresholds
+
 ```
 
 
@@ -184,36 +162,39 @@ tekli yapınca hata???????????
 
 ```{r}
 library("ggplot2")
-geneSetName <- rownames(cells_AUC)[grep("geneSet2", rownames(cells_AUC))]
-AUCell_plotHist(cells_AUC[geneSetName,], aucThr=0.32)
-abline(v=0.32)
+geneSetName <- rownames(cells_AUC)[grep("geneSet1", rownames(cells_AUC))]
+AUCell_plotHist(cells_AUC[geneSetName,], aucThr=0.23)
+abline(v=0.23)
 
 
 ```
 
+
+```{r}
+library("ggplot2")
+geneSetName <- rownames(cells_AUC)[grep("geneSet1", rownames(cells_AUC))]
+AUCell_plotHist(cells_AUC[geneSetName,], aucThr=0.23)
+abline(v=0.23)
+
+
+```
+
+
+
 ```{r}
 quartz()
-newSelectedCells <- names(which(getAUC(cells_AUC)["geneSet2",]>0.32))
+newSelectedCells <- names(which(getAUC(cells_AUC)["geneSet1",]>0.23))
 
 length(newSelectedCells)
 ```
 
 
-
-
 ```{r}
-library("Seurat")
+
+
 exprMatrix$is_ec <- ifelse(colnames(exprMatrix) %in% newSelectedCells, "EV", "non_EV")
 
-DimPlot(reduction = "tsne",object=exprMatrix, group.by = "is_ec", label = TRUE)
-
-```
-, "HSPA4", "HSPA1A", "HSPA4", "HSPA8", "HSPA1B" ,"HSPA5", "HSPA14", "HSPA2", "HSPA9", "HSPD1", "HSP90AA1", "HSP90AB1"
-```{r}
-FeaturePlot(exprMatrix, features = c("C1orf162", "C1QA", "CD74", "CLEC7A", "CTSC", "FCGR3A", "FN1", "GSTO1", "LIPA", "MARCH1", "NCF2", "S100A4", "SLC11A1", "TNFSF13B"))
-
-```
-
+DimPlot(reduction = "umap",object=exprMatrix, group.by = "is_ec", label = TRUE)
 
 
 
