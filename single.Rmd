@@ -1,0 +1,197 @@
+---
+title: "Tüseb"
+author: "beyza"
+date: "2022-12-08"
+output: html_document
+---
+
+load libraries
+```{r}
+library(argparse)
+library(findpython)
+library(sp)
+library(SeuratObject)
+library(Seurat)
+library(hdf5r)
+library(devtools)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(patchwork)
+library(devtools)
+library(AUCell)
+library(Seurat)
+library(GSEABase)
+library(Rtsne)
+library(Seurat)
+
+```
+
+
+
+For Creat SeuratObject 
+```{r}
+
+file_obj <- Read10X_h5(filename = "file.h5", 
+                             use.names = TRUE,
+                             unique.features = TRUE)
+
+Seurat_file <- CreateSeuratObject(counts = file_obj)
+
+```
+
+
+Seurat
+1.MTReads
+```{r}
+Seurat_file[["percent.mt"]] <- PercentageFeatureSet(Seurat_file, pattern = "^MT-")
+
+VlnPlot(Seurat_file, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+```
+
+2. filtering
+```{r}
+Seurat_file <- subset(Seurat_file, subset =nFeature_RNA > 200 & nFeature_RNA <4500 & percent.mt < 17)
+```
+
+3. Normalize data
+```{r}
+#pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
+Seurat_file <- NormalizeData(Seurat_file)
+```
+
+
+4. Identify highly variable features
+```{r}
+Seurat_file <- FindVariableFeatures(Seurat_file, selection.method = "vst", nfeatures = 3863)
+```
+
+
+5. Scaling
+```{r}
+all.genes <- rownames(Seurat_file)
+Seurat_file <- ScaleData(Seurat_file, features = all.genes)
+```
+
+
+6.Perform linear dimensionality reduction
+```{r}
+Seurat_file <- RunPCA(Seurat_file, features = VariableFeatures(object = Seurat_file))
+```
+
+
+7. umap
+```{r}
+
+Seurat_file <- FindNeighbors(Seurat_Gfile, dims = 1:10)
+Seurat_file <- FindClusters(Seurat_file, resolution = 0.5)
+Seurat_file <- RunUMAP(Seurat_file, dims = 1:15)
+DimPlot(Seurat_file, reduction = "umap")
+```
+
+
+
+for see ev gene exp. level
+```{r}
+features <- c("CD9", "CD63", "CD81", "PDCD6IP", "TSG101", "TSPAN6", "TSPAN8")
+RidgePlot(Seurat_file, features = features, ncol = 1)
+VlnPlot(Seurat_file, features = features)
+
+```
+
+
+
+For GeneSetrs
+"CD9", "CD63", "CD81", "PDCD6IP", "TSG101", "ARF6", "ANXA1", "CD82", "CD37", "VTA1", "CD80", "CD86", "SIRT6", "SDCBP", "TRIM5", "CLTC", "VPS4A", "VPS4B", "HSPA4", "HSPA1A", "HSPA4", "HSPA8", "HSPA1B" ,"HSPA5", "HSPA14", "HSPA2", "HSPA9", "HSPD1", "HSP90AA1", "HSP90AB1", "PLD1", "PLD2", "CD40", "CHMP4B", "CHMP4A", "CHMP4C", "FLOT1", "FLOT2", "ANXA2", "ANXA6", "ANXA4", "ANXA7", "CFL1", "CFL2", "PFN1", "PFN2"
+
+"CD9", "CD63", "CD81", "PDCD6IP", "TSG101", "GAPDH", "SDCBP", "SDCBP2", "UBC", "CLTC", "CLTA", "CHMP4B", "CHMP4C", "VPS4A", "VPS4B", "MAPK1", "MAPK3", "ARF6"
+```{r}
+genes <- unique(c("CD9", "CD63", "CD81", "PDCD6IP", "TSG101", "ARF6", "ANXA1", "CD82", "CD37", "VTA1", "CD80", "CD86", "SIRT6", "SDCBP", "TRIM5", "CLTC", "VPS4A", "VPS4B", "HSPA4", "HSPA1A", "HSPA4", "HSPA8", "HSPA1B" ,"HSPA5", "HSPA14", "HSPA2", "HSPA9", "HSPD1", "HSP90AA1", "HSP90AB1", "PLD1", "PLD2", "CD40", "CHMP4B", "CHMP4A", "CHMP4C", "FLOT1", "FLOT2", "ANXA2", "ANXA6", "ANXA4", "ANXA7", "CFL1", "CFL2", "PFN1", "PFN2"))
+geneSets <- GeneSet(genes, setName="geneSet1")
+exprMatrix <- Seurat_GSM3489182
+exprMatrix_A <- Seurat_GSM3489182@assays$RNA@counts
+
+cells_AUC <- AUCell_run(exprMatrix_A, geneSets)
+```
+
+
+
+
+
+```{r}
+counts <- GetAssayData(object = exprMatrix, slot = "counts")
+cells_rankings <- AUCell_buildRankings(counts)
+cells_rankings
+```
+
+
+
+
+```{r}
+cells_AUC <- AUCell_calcAUC(geneSets, cells_rankings)
+```
+
+
+
+
+2. Determine the cells with the given gene signatures or active gene sets
+2. neden boş????
+```{r}
+cells_assignment <- AUCell_exploreThresholds(cells_AUC, plotHist=TRUE, assign=TRUE)
+cells_assignment$Oligodendrocyte_Cahoy$aucThr$thresholds
+
+```
+
+
+tekli yapınca hata???????????
+
+```{r}
+library("ggplot2")
+geneSetName <- rownames(cells_AUC)[grep("geneSet1", rownames(cells_AUC))]
+AUCell_plotHist(cells_AUC[geneSetName,], aucThr=0.23)
+abline(v=0.23)
+
+
+```
+
+
+```{r}
+library("ggplot2")
+geneSetName <- rownames(cells_AUC)[grep("geneSet1", rownames(cells_AUC))]
+AUCell_plotHist(cells_AUC[geneSetName,], aucThr=0.23)
+abline(v=0.23)
+
+
+```
+
+
+
+```{r}
+quartz()
+newSelectedCells <- names(which(getAUC(cells_AUC)["geneSet1",]>0.23))
+
+length(newSelectedCells)
+```
+
+
+```{r}
+
+
+exprMatrix$is_ec <- ifelse(colnames(exprMatrix) %in% newSelectedCells, "EV", "non_EV")
+
+deneme <- DimPlot(reduction = "umap",object=exprMatrix, group.by = "is_ec", label = TRUE)
+deneme
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
