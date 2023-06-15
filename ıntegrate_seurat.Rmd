@@ -161,6 +161,45 @@ donors <- ScaleData(donors, features = all.genes)
 ```
 
 
+EV ilgili genleri expression seviyesini görmek için
+```{r}
+features <- c("CD9", "CD63", "CD81", "PDCD6IP", "TSG101", "TSPAN6", "TSPAN8")
+RidgePlot(Seurat_GSM3489182, features = features, ncol = 1)
+VlnPlot(Seurat_GSM3489182, features = features)
+```
+
+
+
+tsne
+```{r}
+donors <- RunTSNE(
+  donors,
+  reduction = "pca",
+  cells = NULL,
+  dims = 1:5,
+  features = NULL,
+  seed.use = 1,
+  tsne.method = "Rtsne",
+  dim.embed = 2,
+  distance.matrix = NULL,
+  reduction.name = "tsne",
+  reduction.key = "tSNE_"
+)
+DimPlot(donors, reduction = "tsne", group.by = "seurat_clusters")
+```
+
+
+
+umap
+```{r}
+donors <- FindNeighbors(donors, dims = 1:10)
+donors <- FindClusters(donors, resolution = 0.1)
+donors <- RunUMAP(donors, dims = 1:15)
+DimPlot(donors, reduction = "umap", group.by = "seurat_clusters")
+
+```
+
+
 6.Perform linear dimensionality reduction
 ```{r}
 donors <- RunPCA(donors, features = VariableFeatures(object = donors))
