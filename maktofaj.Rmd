@@ -26,38 +26,32 @@ library(Rtsne)
 
 
 
-```{r}
-getwd()
-setwd("/Users/beyzaaygun/Desktop/Bioinformatic/TÜSEB/GSE122960")
-```
-
-
 SeuratObject oluşturmak için
 ```{r}
-GSM3489182_obj1 <- Read10X_h5(filename = "/Users/beyzaaygun/Desktop/Bioinformatic/TÜSEB/GSE122960/GSM3489182_Donor_01_filtered_gene_bc_matrices_h5.h5",
+GSM3489182_obj1 <- Read10X_h5(filename = "GSM3489182_Donor_01_filtered_gene_bc_matrices_h5.h5",
                              use.names = TRUE,
                              unique.features = TRUE)
 
-GSM3489182_obj2 <- Read10X_h5(filename = "/Users/beyzaaygun/Desktop/Bioinformatic/TÜSEB/GSE122960/GSM3489185_Donor_02_filtered_gene_bc_matrices_h5.h5", 
+GSM3489182_obj2 <- Read10X_h5(filename = "GSE122960/GSM3489185_Donor_02_filtered_gene_bc_matrices_h5.h5", 
                              use.names = TRUE,
                              unique.features = TRUE)
-GSM3489182_obj3 <- Read10X_h5(filename = "/Users/beyzaaygun/Desktop/Bioinformatic/TÜSEB/GSE122960/GSM3489187_Donor_03_filtered_gene_bc_matrices_h5.h5", 
+GSM3489182_obj3 <- Read10X_h5(filename = "GSM3489187_Donor_03_filtered_gene_bc_matrices_h5.h5", 
                              use.names = TRUE,
                              unique.features = TRUE)
-GSM3489182_obj4 <- Read10X_h5(filename = "/Users/beyzaaygun/Desktop/Bioinformatic/TÜSEB/GSE122960/GSM3489189_Donor_04_filtered_gene_bc_matrices_h5.h5", 
+GSM3489182_obj4 <- Read10X_h5(filename = "GSE122960/GSM3489189_Donor_04_filtered_gene_bc_matrices_h5.h5", 
                              use.names = TRUE,
                              unique.features = TRUE)
-GSM3489182_obj5 <- Read10X_h5(filename = "/Users/beyzaaygun/Desktop/Bioinformatic/TÜSEB/GSE122960/GSM3489191_Donor_05_filtered_gene_bc_matrices_h5.h5",
+GSM3489182_obj5 <- Read10X_h5(filename = "GSE122960/GSM3489191_Donor_05_filtered_gene_bc_matrices_h5.h5",
                              use.names = TRUE,
                              unique.features = TRUE)
 
-GSM3489182_obj6 <- Read10X_h5(filename = "/Users/beyzaaygun/Desktop/Bioinformatic/TÜSEB/GSE122960/GSM3489193_Donor_06_filtered_gene_bc_matrices_h5.h5", 
+GSM3489182_obj6 <- Read10X_h5(filename = "GSE122960/GSM3489193_Donor_06_filtered_gene_bc_matrices_h5.h5", 
                              use.names = TRUE,
                              unique.features = TRUE)
-GSM3489182_obj7 <- Read10X_h5(filename = "/Users/beyzaaygun/Desktop/Bioinformatic/TÜSEB/GSE122960/GSM3489195_Donor_07_filtered_gene_bc_matrices_h5.h5", 
+GSM3489182_obj7 <- Read10X_h5(filename = "GSE122960/GSM3489195_Donor_07_filtered_gene_bc_matrices_h5.h5", 
                              use.names = TRUE,
                              unique.features = TRUE)
-GSM3489182_obj8 <- Read10X_h5(filename = "/Users/beyzaaygun/Desktop/Bioinformatic/TÜSEB/GSE122960/GSM3489197_Donor_08_filtered_gene_bc_matrices_h5.h5", 
+GSM3489182_obj8 <- Read10X_h5(filename = "TÜSEB/GSE122960/GSM3489197_Donor_08_filtered_gene_bc_matrices_h5.h5", 
                              use.names = TRUE,
                              unique.features = TRUE)
 
