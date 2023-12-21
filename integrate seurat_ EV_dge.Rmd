@@ -28,11 +28,6 @@ library(Seurat)
 ```
 
 
-dosyaya girmeye bir bak
-
-```{r}
-getwd("/Users/beyzaaygun/Desktop/Bioinformatic/TÜSEB/rintegrate/GSE122960")
-```
 
 
 SeuratObject oluşturmak için
