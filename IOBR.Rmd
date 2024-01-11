@@ -1,0 +1,69 @@
+---
+title: "IOBR github"
+author: "beyza"
+date: "2023-12-10"
+output: html_document
+---
+
+1. Loading packages
+```{r}
+library(ComplexHeatmap)
+library(limma)
+library(biomaRt)
+library(preprocessCore)
+library(clusterProfiler)
+library(DESeq2)
+library(devtools)
+library(IOBR) 
+library(tidyverse)
+library(Matrix)
+library(conflicted)
+library(Seurat)
+```
+
+
+
+```{r}
+macrophage <- readRDS("~/macrophage.rds")
+expression_matrix <- macro@assays$RNA@counts
+dense_matrix <- as.matrix(expression_matrix)
+a <- as.data.frame(dense_matrix)
+da <- a[rowSums(a[])>0,]
+```
+
+```{r}
+signature_collection <- list(c("CD63","CD9","PDCD6IP","TSG101","CD81","GAPDH","FLOT1","ACTB","ANXA2","SDCBP","HSP90AA1","HSPA8","ANXA5","ENO1","PKM","HSP90AB1","YWHAZ","PGK1","YWHAE","FLOT2","ANXA1","VCP","PPIA","EEF1A1","ALB","ALDOA","ITGB1","MYH9","CLTC","TPI1","CFL1","EEF2","MSN","GNB1","PRDX1","ANXA6","SLC3A2","EZR","LDHA","LDHB","Bsg","Cdc42","PFN1","ATP1A1","ACTN4","HSPA1A","FLNA","YWHAB","GNAI2","YWHAQ","FASN","CLIC1","PRDX2","GSN","CCT2","RAB5C","HIST1H4A","RAP1B","GNB2","LGALS3BP","YWHAG","RAB10","HLA-A","ACTN1","ANXA7","FN1","TFRC","ran","GDI2","CCT3","AHCY","HSPA5","CCT4","ACLY","C3","Uba1","ANXA11","TUBB4B","KPNB1","CAP1","Rac1","MFGE8","TCP1","RHOA","TLN1","CCT6A","GNAS","Cct5","Rala","EHD1","CCT8","PGAM1","IQGAP1","VCL","GPI", "EIF4A1","RAB7A","EEF1G","ADAM10","A2M"))
+
+```
+
+```{r}
+names(signature_collection) <- "EV"
+
+sig_tme<-calculate_sig_score(pdata           = NULL,
+                             eset            = a,
+                             signature       = signature_collection,
+                             method          = "pca",
+                             mini_gene_count = 1)
+```
+
+
+```{r}
+sig_tme <- readRDS("~/Desktop/sig_tme_19_12_2023_mgc1.rds")
+son_tme2 <- t(column_to_rownames(sig_tme, var = "ID"))
+macrophage <- readRDS("~/Desktop/macrophage.rds")
+sig_tme <- as.matrix(sig_tme)
+rownames(sig_tme) <- sig_tme[, 1]
+sig_tme[, 1] <- as.numeric(sig_tme[, 1])
+sig_tme <- sig_tme[, !colnames(sig_tme) %in% "ID"]
+sig_tme <- as.data.frame(sig_tme)
+
+sig_tme_num <- as.numeric(sig_tme[, 1])
+macrophage$sig_tme_num <- sig_tme_num
+
+
+FeaturePlot(macrophage, features = "sig_tme_num", label = T, reduction = "tsne")
+```
+
+
+
+

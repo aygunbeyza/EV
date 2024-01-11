@@ -15,10 +15,6 @@ library(jpeg)
 ```
 
 
-
-
-
-
 2.slingshot
 ```{r}
 rd <- GetAssayData(object = donors, assay = "RNA")
@@ -157,7 +153,154 @@ heatdata <- as.matrix(assays(sce)$counts[topgenes, pst.ord])
 heatclus <- sce$GMM[pst.ord]
 
 png("p7.png")
+heatmap(log1p(heatdata), Colv = NA,---
+title: "slingshot"
+author: "beyza"
+date: "2023-06-14"
+output: html_document
+---
+
+
+1. load libraries
+```{r}
+library(slingshot)
+library(Seurat)
+library(ggplot2)
+library(jpeg)
+library(SingleCellExperiment)
+library(RColorBrewer)
+library(uwot)
+library(mclust, quietly = TRUE)
+library(grDevices)
+library(tradeSeq)
+```
+
+
+
+2.slingshot
+```{r}
+
+donors <- readRDS("~/Desktop/donors.rds")
+rd <- GetAssayData(object = donors, assay = "RNA")
+cl <- Idents(donors)
+
+```
+
+3.1Gene Filtering
+```{r}
+
+sce <- SingleCellExperiment(assays = list(counts = rd), colData = cl)
+
+
+# Apply gene filter
+geneFilter <- apply(assays(sce)$counts, 1, function(x) {
+  sum(x >= 3) >= 10
+})
+sce <- sce[geneFilter, ]
+```
+
+3.2 normalization
+```{r}
+# Define the FQnorm function
+FQnorm <- function(counts) {
+  rk <- apply(counts, 2, rank, ties.method = 'min')
+  counts.sort <- apply(counts, 2, sort)
+  refdist <- apply(counts.sort, 1, median)
+  norm <- apply(rk, 2, function(r) { refdist[r] })
+  rownames(norm) <- rownames(counts)
+  return(norm)
+}
+
+# Apply FQnorm to the counts matrix in the SingleCellExperiment object
+assays(sce)$norm <- FQnorm(assays(sce)$counts)
+```
+
+3.3 Dimensionality Reduction
+```{r}
+# Apply PCA analysis
+pca <- prcomp(t(log1p(assays(sce)$norm)), scale. = FALSE)
+rd1 <- pca$x[, 1:2]
+
+plot(rd1, col = rgb(0, 0, 0, .5), pch = 16, asp = 1)
+
+```
+
+```{r}
+# Apply UMAP analysis
+rd2 <- uwot::umap(t(log1p(assays(sce)$norm)))
+colnames(rd2) <- c('UMAP1', 'UMAP2')
+
+plot(rd2, col = rgb(0, 0, 0, .5), pch = 16, asp = 1)
+
+# Assign PCA and UMAP dimensions to reducedDims
+reducedDims(sce) <- SimpleList(PCA = rd1, UMAP = rd2)
+
+```
+
+
+3.4Clustering Cells
+```{r}
+reducedDims(sce) <- SimpleList(PCA = rd1, UMAP = rd2)
+
+# Perform classification for rd1 using Mclust
+cl1 <- Mclust(rd1)$classification
+colData(sce)$GMM <- cl1
+
+plot(rd1, col = brewer.pal(9,"Set1")[cl1], pch=16, asp = 1)
+
+```
+
+```{r}
+cl2 <- kmeans(rd1, centers = 4)$cluster
+colData(sce)$kmeans <- cl2
+
+
+plot(rd1, col = brewer.pal(9,"Set1")[cl2], pch=16, asp = 1)
+```
+
+
+4. using slingshot
+```{r}
+
+sce <- slingshot(sce, clusterLabels = 'GMM', reducedDim = 'PCA')
+
+colors <- colorRampPalette(brewer.pal(11,'Spectral')[-6])(100)
+plotcol <- colors[cut(sce$slingPseudotime_1, breaks=100)]
+plot(reducedDims(sce)$PCA, col = plotcol, pch=16, asp = 1)
+lines(SlingshotDataSet(sce), lwd=2, col='black')
+
+```
+
+
+```{r}
+plot(reducedDims(sce)$PCA, col = brewer.pal(9,'Set1')[sce$GMM], pch=16, asp = 1)
+lines(SlingshotDataSet(sce), lwd=2, type = 'lineages', col = 'black')
+```
+5.Downstream Analysis
+5.1 Identifying temporally dynamic genes
+```{r}
+
+# fit negative binomial GAM
+sce <- fitGAM(sce)
+
+# test for dynamic expression
+ATres <- associationTest(sce)
+
+topgenes <- rownames(ATres[order(ATres$pvalue), ])[1:250]
+pst.ord <- order(sce$slingPseudotime_1, na.last = NA)
+heatdata <- as.matrix(assays(sce)$counts[topgenes, pst.ord])
+heatclus <- sce$GMM[pst.ord]
+
 heatmap(log1p(heatdata), Colv = NA,
+        ColSideColors = brewer.pal(9, "Set1")[heatclus])
+
+```
+
+
+
+
+
+
         ColSideColors = brewer.pal(9, "Set1")[heatclus])
 dev.off()
 ```

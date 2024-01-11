@@ -1,0 +1,242 @@
+
+
+readfile
+```{r}
+donors <- readRDS("~/donors.rds")
+```
+
+
+For GeneSetrs
+
+```{r}
+genes2 <- unique(c("C1orf162", "C1QA", "CD74", "CLEC7A", "CTSC", "FCGR3A", "FN1", "GSTO1", "LIPA", "MARCH1", "NCF2", "S100A4", "SLC11A1", "TNFSF13B", "CD14", "CD68", "TFRC", "FCGR1A", "CCR5", "FCGR3A", "IL6", "APOC1", "CD163", "MRC1", "CD163", "CTSL", "CD5L", "GSDMD"))
+geneSets2 <- GeneSet(genes2, setName="geneSet2")
+exprMatrix2 <- donors
+```
+
+1. run
+```{r}
+
+exprMatrix2_count <- exprMatrix2@assays$RNA@counts
+
+cells_AUC2 <- AUCell_run(exprMatrix2_count, geneSets2)
+
+```
+
+
+2. Determine the cells with the given gene signatures or active gene sets
+```{r}
+cells_assignment2 <- AUCell_exploreThresholds(cells_AUC2, plotHist=TRUE, assign=TRUE)
+
+```
+
+3.
+```{r}
+library("ggplot2")
+geneSetName2 <- rownames(cells_AUC2)[grep("geneSet2", rownames(cells_AUC2))]
+AUCell_plotHist(cells_AUC2[geneSetName2,], aucThr=0.21)
+abline(v=0.21)
+
+
+```
+
+
+4.
+```{r}
+quartz()
+newSelectedCells2 <- names(which(getAUC(cells_AUC2)["geneSet2",]>0.21))
+
+length(newSelectedCells2)
+```
+
+
+
+5. to wiew with umap
+```{r}
+
+exprMatrix2$is_ec2 <- ifelse(colnames(exprMatrix2) %in% newSelectedCells2, "macrophase", "non_macrophase")
+exprMatrix2 <- RunUMAP(exprMatrix2, dims = 1:15)
+
+DimPlot(reduction = "umap",object=exprMatrix2, group.by = "is_ec2", label = TRUE)
+
+```
+
+
+7. Eliminate those other than macrophages by looking at the article according to Seurat's classification
+```{r}
+
+nonmacro<- subset(x = donors, subset = seurat_clusters == c("1"))
+macro <- RunUMAP(macro, dims = 1:15)
+DimPlot(reduction = "tsne",object=nonmacro, group.by = "seurat_clusters", label = TRUE)
+
+```
+
+
+
+8. To subset macrophages based on AUCELL result
+```{r}
+macropahges <- subset(x = exprMatrix2, subset = is_ec2 == "macrophase")
+macropahges  <- RunUMAP(macropahges , dims = 1:15)
+DimPlot(reduction = "umap",object=macropahges , group.by = "orig.ident", label = TRUE)
+```
+
+
+Macrophages to find EV(+) cells in their cells
+```{r}
+genes3 <- unique(c("CD63","CD9","PDCD6IP","TSG101","CD81","GAPDH","FLOT1","ACTB","ANXA2","SDCBP","HSP90AA1","HSPA8","ANXA5","ENO1","PKM","HSP90AB1","YWHAZ","PGK1","YWHAE","FLOT2","ANXA1","VCP","PPIA","EEF1A1","ALB","ALDOA","ITGB1","MYH9","CLTC","TPI1","CFL1","EEF2","MSN","GNB1","PRDX1","ANXA6","SLC3A2","EZR","LDHA","LDHB","Bsg","Cdc42","PFN1","ATP1A1","ACTN4","HSPA1A","FLNA","YWHAB","GNAI2","YWHAQ","FASN","CLIC1","PRDX2","GSN","CCT2","RAB5C","HIST1H4A","RAP1B","GNB2","LGALS3BP","YWHAG","RAB10","HLA-A","ACTN1","ANXA7","FN1","TFRC","ran","GDI2","CCT3","AHCY","HSPA5","CCT4","ACLY","C3","Uba1","ANXA11","TUBB4B","KPNB1","CAP1","Rac1","MFGE8","TCP1","RHOA","TLN1","CCT6A","GNAS","Cct5","Rala","EHD1","CCT8","PGAM1","IQGAP1","VCL","GPI", "EIF4A1","RAB7A","EEF1G","ADAM10","A2M"))
+
+geneSets3 <- GeneSet(genes3, setName="geneSet3")
+exprMatrix3 <- macrophage
+```
+
+```{r}
+exprMatrix3_count <- exprMatrix3@assays$RNA@counts
+
+cells_AUC3 <- AUCell_run(exprMatrix3_count, geneSets3)
+```
+
+```{r}
+
+counts3 <- GetAssayData(object = exprMatrix3, slot = "counts")
+
+```
+
+
+2. Determine the cells with the given gene signatures or active gene sets
+```{r}
+cells_assignment3 <- AUCell_exploreThresholds(cells_AUC3, plotHist=TRUE, assign=TRUE)
+cells_assignment3$Oligodendrocyte_Cahoy$aucThr$thresholds
+```
+
+```{r}
+library("ggplot2")
+geneSetName3 <- rownames(cells_AUC3)[grep("geneSet3", rownames(cells_AUC3))]
+AUCell_plotHist(cells_AUC3[geneSetName3,], aucThr=0.21)
+abline(v=0.12)
+
+
+```
+
+```{r}
+quartz()
+newSelectedCells3 <- names(which(getAUC(cells_AUC3)["geneSet3",]>0.21))
+
+length(newSelectedCells3)
+```
+
+
+```{r}
+library("Seurat")
+exprMatrix3$is_ec3 <- ifelse(colnames(exprMatrix3) %in% newSelectedCells3, "EV", "non_EV")
+exprMatrix3 <- RunUMAP(exprMatrix3, dims = 1:15)
+DimPlot(reduction = "umap",object=exprMatrix3, group.by = "is_ec3", label = TRUE)
+
+
+```
+
+
+which cell which donor
+```{r}
+DimPlot(reduction = "umap",object=exprMatrix3, group.by = "orig.ident", label = TRUE)
+```
+
+
+
+Differential gene expression
+
+```{r}
+
+suppressPackageStartupMessages({
+    library(Seurat)
+    library(dplyr)
+    library(cowplot)
+    library(ggplot2)
+    library(pheatmap)
+    library(enrichR)
+    library(rafalib)
+    library(Matrix)
+    library(edgeR)
+    library(MAST)
+})
+```
+
+
+markers_all <- FindAllMarkers(exprMatrix3, test.use = "MAST", slot = "data")
+```{r}
+exprMatrix3 <- SetIdent(exprMatrix3, value = exprMatrix3@meta.data$is_ec3)
+exprMatrix3@misc$markers <- FindAllMarkers(object = exprMatrix3, assay = 'RNA',only.pos = TRUE, test.use = 'MAST')
+```
+
+
+```{r}
+exprMatrix3@misc$markers %>%
+    group_by(cluster) %>%
+    top_n(n= -10, wt= p_val_adj) -> top10
+top10
+```
+
+
+```{r}
+mypar(2, 5, mar = c(4, 6, 3, 1))
+for (i in unique(top10$cluster)) {
+    barplot(sort(setNames(top10$avg_log2FC, top10$gene)[top10$cluster == i], F),
+        horiz = T, las = 1, main = paste0(i, " vs. rest"), border = "white", yaxs = "i")
+    abline(v = c(0, 0.25), lty = c(1, 2))
+}
+```
+
+
+```{r}
+markers_all %>%
+    group_by(cluster) %>%
+    top_n(-7, p_val_adj) -> top7
+
+# create a scale.data slot for the selected genes
+exprMatrix3 <- ScaleData(exprMatrix3, features = as.character(unique(top10$gene)), assay = "RNA")
+DoHeatmap(exprMatrix3, features = as.character(unique(top10$gene)), group.by = "is_ec3",
+    assay = "RNA")
+```
+
+```{r}
+DotPlot(exprMatrix3, features = rev(as.character(unique(top10$gene))), group.by = "is_ec3",
+    assay = "RNA") + coord_flip()
+```
+
+for ratio
+```{r}
+
+all <- as.data.frame(exprMatrix3@meta.data)
+all_length <- nrow(all)
+
+D1 <- filter(
+  all,orig.ident == "D1")
+D1_length <- nrow(D1)
+
+D2 <- filter(
+  all,orig.ident == "D2")
+nrow(D2)
+D2_length <- nrow(D2)
+
+D3 <- filter(
+  all,orig.ident == "D3")
+nrow(D3)
+D3_length <- nrow(D3)
+
+D4 <- filter(
+  all,orig.ident == "D4")
+nrow(D4)
+D4_length <- nrow(D4)
+
+D5 <- filter(
+  all,orig.ident == "D5")
+nrow(D5)
+D5_length <- nrow(D5)
+
+ratio <- data_frame(D1 = D1_length/all_length,
+                    D2 = D2_length/all_length,
+                    D3 = D3_length/all_length,
+                    D4 = D4_length/all_length,
+                    D5 = D5_length/all_length)
+```
+
+

@@ -1,0 +1,49 @@
+
+```{r}
+donors <- readRDS("~/donors.rds")
+```
+
+with vesiclepedia gene
+```{r}
+genes <- unique(c("CD63","CD9","PDCD6IP","TSG101","CD81","GAPDH","FLOT1","ACTB","ANXA2","SDCBP","HSP90AA1","HSPA8","ANXA5","ENO1","PKM","HSP90AB1","YWHAZ","PGK1","YWHAE","FLOT2","ANXA1","VCP","PPIA","EEF1A1","ALB","ALDOA","ITGB1","MYH9","CLTC","TPI1","CFL1","EEF2","MSN","GNB1","PRDX1","ANXA6","SLC3A2","EZR","LDHA","LDHB","Bsg","Cdc42","PFN1","ATP1A1","ACTN4","HSPA1A","FLNA","YWHAB","GNAI2","YWHAQ","FASN","CLIC1","PRDX2","GSN","CCT2","RAB5C","HIST1H4A","RAP1B","GNB2","LGALS3BP","YWHAG","RAB10","HLA-A","ACTN1","ANXA7","FN1","TFRC","ran","GDI2","CCT3","AHCY","HSPA5","CCT4","ACLY","C3","Uba1","ANXA11","TUBB4B","KPNB1","CAP1","Rac1","MFGE8","TCP1","RHOA","TLN1","CCT6A","GNAS","Cct5","Rala","EHD1","CCT8","PGAM1","IQGAP1","VCL","GPI", "EIF4A1","RAB7A","EEF1G","ADAM10","A2M"))
+geneSets <- GeneSet(genes, setName="geneSet2")
+exprMatrix <- donors
+```
+
+1.AUCell_run
+```{r}
+exprMatrix_count <- exprMatrix@assays$RNA@counts
+
+cells_AUC <- AUCell_run(exprMatrix_count, geneSets)
+```
+
+
+2. Determine the cells with the given gene signatures or active gene sets
+```{r}
+cells_assignment <- AUCell_exploreThresholds(cells_AUC, plotHist=TRUE, assign=TRUE)
+
+```
+
+
+3.
+```{r}
+library("ggplot2")
+geneSetName <- rownames(cells_AUC)[grep("geneSet2", rownames(cells_AUC))]
+AUCell_plotHist(cells_AUC[geneSetName,], aucThr=0.13)
+abline(v=0.13)
+```
+
+4.
+```{r}
+quartz()
+newSelectedCells <- names(which(getAUC(cells_AUC)["geneSet2",]>0.11))
+length(newSelectedCells)
+```
+
+5.
+```{r}
+library("Seurat")
+exprMatrix$is_ec <- ifelse(colnames(exprMatrix) %in% newSelectedCells, "EV", "non_EV")
+DimPlot(reduction = "tsne",object=exprMatrix, group.by = "is_ec", label = TRUE)
+```
+
