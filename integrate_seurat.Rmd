@@ -1,0 +1,202 @@
+
+
+load libraries
+```{r}
+library(argparse)
+library(findpython)
+library(sp)
+library(SeuratObject)
+library(Seurat)
+library(hdf5r)
+library(devtools)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(patchwork)
+library(devtools)
+library(AUCell)
+library(GSEABase)
+library(Rtsne)
+library(Seurat)
+
+
+
+```
+
+
+dosyaya girmeye bir bak
+
+```{r}
+getwd("/Users/beyzaaygun/Desktop/Bioinformatic/TÜSEB/rintegrate/GSE122960")
+
+```
+
+
+for seuratobject
+```{r}
+obj1 <- Read10X_h5(filename = "donor1_h5.h5",
+                             use.names = TRUE,
+                             unique.features = TRUE)
+
+obj2 <- Read10X_h5(filename = "donor2_h5.h5", 
+                             use.names = TRUE,
+                             unique.features = TRUE)
+obj3 <- Read10X_h5(filename = "donor3_h5.h5", 
+                             use.names = TRUE,
+                             unique.features = TRUE)
+obj4 <- Read10X_h5(filename = "donor4_h5.h5", 
+                             use.names = TRUE,
+                             unique.features = TRUE)
+obj5 <- Read10X_h5(filename = "donor5_h5.h5",
+                             use.names = TRUE,
+                             unique.features = TRUE)
+
+obj6 <- Read10X_h5(filename = "donor6_h5.h5", 
+                             use.names = TRUE,
+                             unique.features = TRUE)
+obj7 <- Read10X_h5(filename = "donor7_h5.h5", 
+                             use.names = TRUE,
+                             unique.features = TRUE)
+obj8 <- Read10X_h5(filename = "donor8_h5.h5", 
+                             use.names = TRUE,
+                             unique.features = TRUE)
+
+donor_1 <- CreateSeuratObject(counts = obj1, project = "D1", min.cells = 3, min.features = 200)
+donor_2 <- CreateSeuratObject(counts = obj2, project = "D2", min.cells = 3, min.features = 200)
+donor_3 <- CreateSeuratObject(counts = obj3, project = "D3", min.cells = 3, min.features = 200)
+donor_4 <- CreateSeuratObject(counts = obj4, project = "D4", min.cells = 3, min.features = 200)
+donor_5 <- CreateSeuratObject(counts = obj5, project = "D5", min.cells = 3, min.features = 200)
+donor_6 <- CreateSeuratObject(counts = obj6, project = "D6", min.cells = 3, min.features = 200)
+donor_7 <- CreateSeuratObject(counts = obj7, project = "D7", min.cells = 3, min.features = 200)
+donor_8 <- CreateSeuratObject(counts = obj8, project = "D8", min.cells = 3, min.features = 200)
+
+```
+
+
+Seurat
+1.MTReads
+```{r}
+
+donor_1[["percent.mt"]] <- PercentageFeatureSet(donor_1, pattern = "^MT-")
+donor_2[["percent.mt"]] <- PercentageFeatureSet(donor_2, pattern = "^MT-")
+donor_3[["percent.mt"]] <- PercentageFeatureSet(donor_3, pattern = "^MT-")
+donor_4[["percent.mt"]] <- PercentageFeatureSet(donor_4, pattern = "^MT-")
+donor_5[["percent.mt"]] <- PercentageFeatureSet(donor_5, pattern = "^MT-")
+donor_6[["percent.mt"]] <- PercentageFeatureSet(donor_6, pattern = "^MT-")
+donor_7[["percent.mt"]] <- PercentageFeatureSet(donor_7, pattern = "^MT-")
+donor_8[["percent.mt"]] <- PercentageFeatureSet(donor_8, pattern = "^MT-")
+
+
+VlnPlot(donor_1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(donor_2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(donor_3, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(donor_4, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(donor_5, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(donor_6, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(donor_7, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(donor_8, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+```
+
+
+2. filtering
+```{r}
+
+donor_1 <- subset(donor_1, subset =nFeature_RNA > 200 & nFeature_RNA <4500 & percent.mt < 17)
+donor_2 <- subset(donor_2, subset =nFeature_RNA > 200 & nFeature_RNA <4500 & percent.mt < 17)
+donor_3 <- subset(donor_3, subset =nFeature_RNA > 200 & nFeature_RNA <4500 & percent.mt < 17)
+donor_4 <- subset(donor_4, subset =nFeature_RNA > 200 & nFeature_RNA <4500 & percent.mt < 17)
+donor_5 <- subset(donor_5, subset =nFeature_RNA > 200 & nFeature_RNA <4500 & percent.mt < 17)
+donor_6 <- subset(donor_6, subset =nFeature_RNA > 200 & nFeature_RNA <4500 & percent.mt < 17)
+donor_7 <- subset(donor_7, subset =nFeature_RNA > 200 & nFeature_RNA <4500 & percent.mt < 17)
+donor_8 <- subset(donor_8, subset =nFeature_RNA > 200 & nFeature_RNA <4500 & percent.mt < 17)
+```
+
+3. Normalize data
+```{r}
+#pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
+
+donor_1 <- NormalizeData(donor_1)
+donor_2 <- NormalizeData(donor_2)
+donor_3 <- NormalizeData(donor_3)
+donor_4 <- NormalizeData(donor_4)
+donor_5 <- NormalizeData(donor_5)
+donor_6 <- NormalizeData(donor_6)
+donor_7 <- NormalizeData(donor_7)
+donor_8 <- NormalizeData(donor_8)
+```
+
+
+4. Identify highly variable features
+```{r}
+
+donor_1 <- FindVariableFeatures(donor_1, selection.method = "vst", nfeatures = 2000)
+donor_2 <- FindVariableFeatures(donor_2, selection.method = "vst", nfeatures = 2000)
+donor_3 <- FindVariableFeatures(donor_3, selection.method = "vst", nfeatures = 2000)
+donor_4 <- FindVariableFeatures(donor_4, selection.method = "vst", nfeatures = 2000)
+donor_5 <- FindVariableFeatures(donor_5, selection.method = "vst", nfeatures = 2000)
+donor_6 <- FindVariableFeatures(donor_6, selection.method = "vst", nfeatures = 2000)
+donor_7 <- FindVariableFeatures(donor_7, selection.method = "vst", nfeatures = 2000)
+donor_8 <- FindVariableFeatures(donor_8, selection.method = "vst", nfeatures = 2000)
+```
+
+integrate
+```{r}
+liste <- list(donor_1, donor_2, donor_3, donor_4, donor_5, donor_6, donor_7, donor_8))
+Features <- SelectIntegrationFeatures(object.list = liste)
+donors <- FindIntegrationAnchors(object.list = liste, anchor.features = Features)
+donors <- IntegrateData(anchorset = donors)
+```
+
+
+5. Scaling
+```{r}
+all.genes <- rownames(donors)
+donors <- ScaleData(donors, features = all.genes)
+```
+
+6.Perform linear dimensionality reduction
+```{r}
+donors <- RunPCA(donors, features = VariableFeatures(object = donors))
+
+```
+
+7. seurat_cluster
+```{r}
+donors <- FindNeighbors(donors, dims = 1:10)
+donors <- FindClusters(donors, resolution = 0.1)
+```
+
+
+8. tsne
+```{r}
+donors <- RunTSNE(
+  donors,
+  reduction = "pca",
+  cells = NULL,
+  dims = 1:5,
+  features = NULL,
+  seed.use = 1,
+  tsne.method = "Rtsne",
+  dim.embed = 2,
+  distance.matrix = NULL,
+  reduction.name = "tsne",
+  reduction.key = "tSNE_"
+)
+DimPlot(donors, reduction = "tsne", group.by = "seurat_clusters")
+```
+
+
+
+9. umap
+```{r}
+donors <- RunUMAP(donors, dims = 1:10)
+DimPlot(donors, reduction = "umap", group.by = "seurat_clusters")
+
+```
+
+10. save 
+```{r}
+saveRDS(donors, "donors.rds")
+```
+
+
