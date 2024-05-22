@@ -162,3 +162,7 @@ Pipfile.lock
 env/
 randomforest/
 *.mtx
+python/lucas_top_100_genes_with_correlations.numbers
+
+python/.DS_Store
+.DS_Store
